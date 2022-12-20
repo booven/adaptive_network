@@ -1,6 +1,6 @@
-from networks.xception import TransferModel
-from networks.texture_net import Pre_Train_SR
-from components.attention import SpatialAttention, Attention_sum, AFF_2d, MultiSpectralAttentionLayer
+from networks.xception import XceptionNet
+from networks.texture_net import SRnet
+from components.attention import SpatialAttention, TemporalAttention, AttentionFusion, AFCA
 from thop import profile
 from torch.autograd import Variable
 import torch
@@ -52,7 +52,7 @@ class RnnModule(nn.Module):
         self.hidden_size = hidden_size
 
         # self.LSTM_attention = Attention(hidden_size)
-        self.LSTM_attention_sum = Attention_sum(hidden_size)
+        self.LSTM_attention_sum = TemporalAttention(hidden_size)
 
     def forward(self, x, b_z):  #[12, 1024, 10, 10]
         x = F.adaptive_avg_pool2d(self.relu(x), (1, 1)) #[12, 1024, 1, 1]
@@ -91,7 +91,7 @@ class FusionModel(nn.Module):
         #     nn.ReLU()
         # )
         # self.Att_fusion = AFF(channels=1536)
-        self.Att_fusion_2d = AFF_2d(channels=1536)
+        self.Att_fusion_2d = AttentionFusion(channels=1536)
         # self.BilinearPooling = CompactBilinearPooling(2048, 2048, 2048)
         self.init_weight()
 
@@ -144,7 +144,7 @@ class LSTM_Preprocess(nn.Module):
 class Dimension_expansion(nn.Module):
     def __init__(self):
         super(Dimension_expansion, self).__init__()
-        self.xception = TransferModel('xception', dropout=0.5, inc=3, return_fea=True)
+        self.xception = XceptionNet('xception', dropout=0.5, inc=3, return_fea=True)
 
     def forward(self, x):
         # x = x.unsqueeze(dim=2)
@@ -156,16 +156,16 @@ class Dimension_expansion(nn.Module):
 class Two_Stream_Net(nn.Module):
     def __init__(self, device=None ):
         super(Two_Stream_Net, self).__init__()
-        self.xception_rgb = TransferModel('xception', dropout=0.5, inc=3, return_fea=True)
+        self.xception_rgb = XceptionNet('xception', dropout=0.5, inc=3, return_fea=True)
 
-        self.SR_residual = Pre_Train_SR()
+        self.SR_residual = SRnet()
 
         self.relu = nn.ReLU(inplace=True)
 
         self.Channel_att_map = None
         self.Spatial_att_map = None
         # self.pa = SpatialAttention()
-        self.dcta = MultiSpectralAttentionLayer(16,256,256)
+        self.dcta = AFCA(16,256,256)
         # self.ca = SELayer(64)
 
         self.sr_att = TextureAttention(16)
@@ -244,7 +244,7 @@ class Two_Stream_Net(nn.Module):
 
     def forward(self, x):
         '''
-        x: original rgb
+        x: original vector
         '''
         out, fea = self.classifier(self.features(x))
 
