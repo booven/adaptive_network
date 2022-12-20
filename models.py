@@ -1,12 +1,7 @@
-import sys
-sys.path.append("/home/lbw/two-stream/")
-from networks.xception_v1 import TransferModel
+from networks.xception import TransferModel
+from networks.texture_net import Pre_Train_SR
 from components.attention import ChannelAttention, SpatialAttention, SELayer, Attention, Attention_sum, AFF, AFF_2d
 from components.attention_v1 import  MultiSpectralAttentionLayer
-from components.srm_conv import SRMConv2d_simple
-from components.CompactBilinearPooling import CompactBilinearPooling
-# from networks.texture_net import Pre_Train_SR
-from networks.texture_net_v2 import Pre_Train_SR
 from thop import profile
 from torch.autograd import Variable
 import torch
