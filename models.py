@@ -1,7 +1,6 @@
 from networks.xception import TransferModel
 from networks.texture_net import Pre_Train_SR
-from components.attention import ChannelAttention, SpatialAttention, SELayer, Attention, Attention_sum, AFF, AFF_2d
-from components.attention_v1 import  MultiSpectralAttentionLayer
+from components.attention import SpatialAttention, Attention_sum, AFF_2d, MultiSpectralAttentionLayer
 from thop import profile
 from torch.autograd import Variable
 import torch
