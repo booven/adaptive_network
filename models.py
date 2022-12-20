@@ -82,52 +82,6 @@ class RnnModule(nn.Module):
 
         return h
 
-class FusionModel(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(FusionModel, self).__init__()
-        # self.fusion_convblk = nn.Sequential(
-        #     nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=2),
-        #     nn.BatchNorm1d(out_channels),
-        #     nn.ReLU()
-        # )
-        # self.Att_fusion = AFF(channels=1536)
-        self.Att_fusion_2d = AttentionFusion(channels=1536)
-        # self.BilinearPooling = CompactBilinearPooling(2048, 2048, 2048)
-        self.init_weight()
-
-    def forward(self, x, y):
-        #   concat
-        # fuse_fea = torch.cat((x, y), dim=2)
-        # fuse_fea = self.fusion_convblk(fuse_fea.permute(0, 2, 1))
-        # fuse_fea = fuse_fea.squeeze()
-
-        #   add
-        # fuse_fea = x.add(y)
-
-        #  Attentional Feature Fusion
-        x = x.unsqueeze(dim=2)
-        y = y.unsqueeze(dim=2)
-
-        # fuse_fea = self.Att_fusion(x.permute(0, 2, 1), y.permute(0, 2, 1))
-        fuse_fea = self.Att_fusion_2d(x.unsqueeze(dim=2), y.unsqueeze(dim=2))
-        # fuse_fea = fuse_fea.sum(dim=2)
-
-        #   Bilinear Pooling
-        # x = x.sum(dim=1)
-        # y = y.sum(dim=1)
-        # x = x.unsqueeze(dim=2)
-        # y = y.unsqueeze(dim=2)
-        # fuse_fea = self.BilinearPooling(x.unsqueeze(dim=2), y.unsqueeze(dim=2))
-
-        return fuse_fea
-
-    def init_weight(self):
-        for ly in self.children():
-            if isinstance(ly, nn.Conv1d):
-                nn.init.kaiming_normal_(ly.weight, a=1)
-                if not ly.bias is None:
-                    nn.init.constant_(ly.bias, 0)
-
 class LSTM_Preprocess(nn.Module):
     def __init__(self):
         super(LSTM_Preprocess, self).__init__()
@@ -164,9 +118,7 @@ class Two_Stream_Net(nn.Module):
 
         self.Channel_att_map = None
         self.Spatial_att_map = None
-        # self.pa = SpatialAttention()
         self.dcta = AFCA(16,256,256)
-        # self.ca = SELayer(64)
 
         self.sr_att = TextureAttention(16)
         self.ar_att_post = nn.Sequential(
