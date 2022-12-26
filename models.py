@@ -1,6 +1,7 @@
-from networks.xception import XceptionNet
-from networks.texture_net import SRnet
-from components.attention import SpatialAttention, TemporalAttention, AttentionFusion, AFCA
+from networks.Xception import XceptionNet
+from networks.SRnet import SR_Net
+from components.attention import SpatialAttention, TemporalAttention, AFCA
+from components.FusionModule import FusionModel
 from thop import profile
 from torch.autograd import Variable
 import torch
@@ -107,12 +108,12 @@ class Dimension_expansion(nn.Module):
 
         return x
 
-class Two_Stream_Net(nn.Module):
+class Adf_Net(nn.Module):
     def __init__(self, device=None ):
         super(Two_Stream_Net, self).__init__()
         self.xception_rgb = XceptionNet('xception', dropout=0.5, inc=3, return_fea=True)
 
-        self.SR_residual = SRnet()
+        self.SR_residual = SR_Net()
 
         self.relu = nn.ReLU(inplace=True)
 
@@ -207,9 +208,6 @@ if __name__ == '__main__':
     model = Two_Stream_Net()
     dummy = torch.rand((6,2,4,299,299))
     out = model(dummy)
-    flops, params = profile(model, (dummy,))
-    print('flops: ', flops, 'params: ', params)
-    print('flops: %.2f M, params: %.2f M' % (flops / 1000000.0, params / 1000000.0))
 
 
 
