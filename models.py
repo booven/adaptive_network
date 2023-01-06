@@ -27,7 +27,7 @@ class RnnModule(nn.Module):
         self.hidden_size = hidden_size
 
         # self.LSTM_attention = Attention(hidden_size)
-        self.LSTM_attention_sum = TemporalAttention(hidden_size)
+        self.GRU_attention = TemporalAttention(hidden_size)
 
     def forward(self, x, b_z):  #[12, 1024, 10, 10]
         x = F.adaptive_avg_pool2d(self.relu(x), (1, 1)) #[12, 1024, 1, 1]
@@ -51,15 +51,15 @@ class RnnModule(nn.Module):
         #   BiGRU
         outputs, hidden = self.BiGRU(y)
         H = outputs[:, :, : self.hidden_size] + outputs[:, :, self.hidden_size:]
-        r, alphas = self.LSTM_attention_sum(H)
+        r, alphas = self.GRU_attention(H)
         h = self.dropout(self.tanh(r))
         # print('r', r.size())
 
         return h
 
-class LSTM_Preprocess(nn.Module):
+class RNN_Preprocess(nn.Module):
     def __init__(self):
-        super(LSTM_Preprocess, self).__init__()
+        super(RNN_Preprocess, self).__init__()
 
     def forward(self, x):   #   (6,2,4,256,256)
         length = x.size(0)
@@ -84,7 +84,7 @@ class Dimension_expansion(nn.Module):
 
 class Adf_Net(nn.Module):
     def __init__(self, device=None ):
-        super(Two_Stream_Net, self).__init__()
+        super(Adf_Net, self).__init__()
         self.xception_rgb = XceptionNet('xception', dropout=0.5, inc=3, return_fea=True)
 
         self.SR_residual = SR_Net()
@@ -102,7 +102,7 @@ class Adf_Net(nn.Module):
         )
 
         # self.fusion = FeatureFusionModule()
-        self.preprocess = LSTM_Preprocess()
+        self.preprocess = RNN_Preprocess()
         self.Xcep_Rnn = RnnModule(input_size=1024, hidden_size=1536, num_layers=1)
         self.SR_Rnn = RnnModule(input_size=1024, hidden_size=1536, num_layers=1)
         self.fusion = FusionModel(in_channels=1536, out_channels=2048)

@@ -297,7 +297,7 @@ def sr_net(num_classes=1000,inc=1):
     return model
 
 
-class Pre_Train_SR(nn.Module):
+class SR_Net(nn.Module):
     """
     """
 
