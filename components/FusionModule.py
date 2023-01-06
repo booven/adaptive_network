@@ -9,14 +9,17 @@ import types
 class FusionModel(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(FusionModel, self).__init__()
+
         # self.fusion_convblk = nn.Sequential(
         #     nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=2),
         #     nn.BatchNorm1d(out_channels),
         #     nn.ReLU()
         # )
-        # self.Att_fusion = AFF(channels=1536)
-        self.Att_fusion_2d = AFF_2d(channels=1536)
+
+        self.Att_fusion_2d = AFF(channels=1536)
+
         # self.BilinearPooling = CompactBilinearPooling(2048, 2048, 2048)
+        
         self.init_weight()
 
     def forward(self, x, y):
@@ -32,9 +35,7 @@ class FusionModel(nn.Module):
         x = x.unsqueeze(dim=2)
         y = y.unsqueeze(dim=2)
 
-        # fuse_fea = self.Att_fusion(x.permute(0, 2, 1), y.permute(0, 2, 1))
         fuse_fea = self.Att_fusion_2d(x.unsqueeze(dim=2), y.unsqueeze(dim=2))
-        # fuse_fea = fuse_fea.sum(dim=2)
 
         #   Bilinear Pooling
         # x = x.sum(dim=1)
@@ -53,8 +54,10 @@ class FusionModel(nn.Module):
                     nn.init.constant_(ly.bias, 0)
 
 
-#   双线性池化，参考自：https://github.com/jnhwkim/cbp
-#   相关paper："Multimodal Compact Bilinear Pooling for Visual Question Answering and Visual Grounding"
+    '''
+    双线性池化，参考自：https://github.com/jnhwkim/cbp
+    相关paper："Multimodal Compact Bilinear Pooling for Visual Question Answering and Visual Grounding"
+    '''
 
 class CompactBilinearPooling(nn.Module):
     """
@@ -166,17 +169,18 @@ class CompactBilinearPooling(nn.Module):
             indices.t(), rand_s, torch.Size([input_dim, output_dim]))
         return sparse_sketch_matrix.to_dense()
 
+    '''
+    注意力特征融合，参考自：https://github.com/YimianDai/open-aff
+    相关paper："Attentional Feature Fusion"
+    '''
 
-#   注意力特征融合，参考自：https://github.com/YimianDai/open-aff
-#   相关paper："Attentional Feature Fusion"
-
-class AFF_2d(nn.Module):
+class AFF(nn.Module):
     '''
     多特征融合 AFF
     '''
 
     def __init__(self, channels, r=4):
-        super(AFF_2d, self).__init__()
+        super(AFF, self).__init__()
         inter_channels = int(channels // r)
 
         self.local_att = nn.Sequential(

@@ -1,6 +1,6 @@
 from networks.Xception import XceptionNet
 from networks.SRnet import SR_Net
-from components.attention import SpatialAttention, TemporalAttention, AFCA
+from components.attention import TextureAttention, TemporalAttention, AFCA
 from components.FusionModule import FusionModel
 from thop import profile
 from torch.autograd import Variable
@@ -11,32 +11,6 @@ import torch.nn.init as init
 import numpy as np
 import types
 
-
-class TextureAttention(nn.Module):
-    def __init__(self, in_channels):
-        super(TextureAttention, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, 32, 3, 2, 0, bias=False),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 64, 3, bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-        )
-
-        self.pa = SpatialAttention()
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, a=1)
-                if not m.bias is None:
-                    nn.init.constant_(m.bias, 0)
-
-    def forward(self, x):
-        fea = self.conv(x)
-        att_map = self.pa(fea)
-
-        return att_map
 
 class RnnModule(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers):
