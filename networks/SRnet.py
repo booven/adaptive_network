@@ -297,12 +297,12 @@ def sr_net(num_classes=1000,inc=1):
     return model
 
 
-class SR_Net(nn.Module):
+class Train_SR(nn.Module):
     """
     """
 
     def __init__(self):
-        super(Pre_Train_SR, self).__init__()
+        super(Train_SR, self).__init__()
 
         def return_pytorch04_xception(pretrained=True):
             # Raises warning "src not broadcastable to dst" but thats fine

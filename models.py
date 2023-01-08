@@ -1,5 +1,5 @@
 from networks.Xception import XceptionNet
-from networks.SRnet import SR_Net
+from networks.SRnet import Train_SR
 from components.attention import TextureAttention, TemporalAttention, AFCA
 from components.FusionModule import FusionModel
 from thop import profile
@@ -87,7 +87,7 @@ class Adf_Net(nn.Module):
         super(Adf_Net, self).__init__()
         self.xception_rgb = XceptionNet('xception', dropout=0.5, inc=3, return_fea=True)
 
-        self.SR_residual = SR_Net()
+        self.SR_residual = Train_SR()
 
         self.relu = nn.ReLU(inplace=True)
 
@@ -179,7 +179,7 @@ class Adf_Net(nn.Module):
         # return out, fea, self.Channel_att_map, self.Spatial_att_map
 
 if __name__ == '__main__':
-    model = Two_Stream_Net()
+    model = Adf_Net()
     dummy = torch.rand((6,2,4,299,299))
     out = model(dummy)
 

@@ -106,10 +106,11 @@ class TemporalAttention(nn.Module):
 在线阅读："https://openaccess.thecvf.com/content/ICCV2021/papers/Qin_FcaNet_Frequency_Channel_Attention_Networks_ICCV_2021_paper.pdf"
 """
 
-# 获取频率分量对应的索引，AdfNet采用"FcaNet: Frequency Channel Attention Networks"论文中实验得出效果最佳的结果
-# 作为初始频域分量，并加上可学习的频域分量以此自适应学习有效噪声残差
+# 获取频率分量对应的索引，AdfNet采用"FcaNet: Frequency Channel Attention Networks"论文中实验得出效果最佳的结果作为初始频域分量，
+# 并加上可学习的频域分量以此自适应学习有效噪声残差，在初步方案决策时也相继尝试过使用随机初始频域分量，发现在训练难度加大的同时检测精度
+# 并没明显改善，故采取现有方案。
 
-def get_freq_indices(method):
+def get_freq_indices():
     mapper_x = [0, 0, 6, 0, 0, 1, 1, 4, 5, 1, 3, 0, 0, 0, 3, 2]
     mapper_y = [0, 1, 0, 5, 2, 0, 2, 0, 0, 6, 0, 4, 6, 3, 5, 2]
     return mapper_x, mapper_y
@@ -157,8 +158,11 @@ class MultiSpectralDCTLayer(nn.Module):
 
         self.num_freq = len(mapper_x)
 
+        # 可学习参数
+        self.u_learnable = nn.Parameter(torch.rand(channel, height, width))
+
         # 可学习的DCT滤波器
-        self.learnable_parameter('weight', self.get_dct_filter(height, width, mapper_x, mapper_y, channel))
+        self.register_buffer('weight', self.get_dct_filter(height, width, mapper_x, mapper_y, channel))
 
     def forward(self, x):
         assert len(x.shape) == 4, 'x must been 4 dimensions, but got ' + str(len(x.shape))
@@ -202,7 +206,7 @@ class MultiSpectralDCTLayer(nn.Module):
                 for t_y in range(tile_size_y):  # 遍历过滤器的Y坐标
                     # i * c_part to (i + 1) * c_part 特征是特征之一的平均值，i代表第i个
                     # #计算每个DCT_WEIGHT
-                    dct_filter[i * c_part: (i + 1) * c_part, t_x, t_y] = self.build_filter(t_x, u_x, tile_size_x) * self.build_filter(t_y, v_y, tile_size_y)
-                    # T_x为方程7中滤波器(J)的X坐标，U_X为所选频率分量(W，即频率)对应的X坐标，Tile_Size_x滤波器的X轴总长(方程7中)W  )
+                    dct_filter[i * c_part: (i + 1) * c_part, t_x, t_y] = self.build_filter(t_x, u_x, tile_size_x) * self.build_filter(t_y, v_y, tile_size_y) + self.u_learnable[i * c_part: (i + 1) * c_part, t_x, t_y]
+                    # T_x为滤波器的X坐标，U_X为所选频率分量(W，即频率)对应的X坐标，Tile_Size_x滤波器的X轴总长)
 
-        return nn.Parameter(dct_filter) # 可学习的参数
+        return dct_filter

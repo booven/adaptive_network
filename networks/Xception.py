@@ -37,7 +37,7 @@ pretrained_settings = {
     }
 }
 
-PRETAINED_WEIGHT_PATH = '../xception-b5690688.pth'
+PRETAINED_WEIGHT_PATH = '/home/lbw/xception-b5690688.pth'
 
 class SeparableConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=1, stride=1, padding=0, dilation=1, bias=False):
@@ -115,7 +115,7 @@ def add_gaussian_noise(ins, mean=0, stddev=0.2):
     return ins + noise
 
 
-class XceptionNet(nn.Module):
+class Xception(nn.Module):
     """
     Xception optimized for the ImageNet dataset, as specified in
     https://arxiv.org/pdf/1610.02357.pdf
@@ -126,7 +126,7 @@ class XceptionNet(nn.Module):
         Args:
             num_classes: number of classes
         """
-        super(XceptionNet, self).__init__()
+        super(Xception, self).__init__()
         self.num_classes = num_classes
 
         # Entry flow
@@ -306,14 +306,14 @@ def xception(num_classes=1000, pretrained='imagenet', inc=3):
     return model
 
 
-class TransferModel(nn.Module):
+class XceptionNet(nn.Module):
     """
     Simple transfer learning model that takes an imagenet pretrained model with
     a fc layer as base model and retrains a new fc layer for num_out_classes
     """
 
     def __init__(self, modelchoice, num_out_classes=1, dropout=0.0, weight_norm=False, return_fea=False, inc=3):
-        super(TransferModel, self).__init__()
+        super(XceptionNet, self).__init__()
         self.modelchoice = modelchoice
         self.return_fea = return_fea
 
