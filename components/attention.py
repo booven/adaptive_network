@@ -121,12 +121,13 @@ class AFCA(nn.Module):
         self.dct_h = dct_h
         self.dct_w = dct_w
 
-        mapper_x, mapper_y = get_freq_indices()
+        mapper_x, mapper_y = get_freq_indices()     #获得初始频域分量
         self.num_split = len(mapper_x)  # 多少个频率分量分成多少个部分，一个特征图用一个频率分量预处理
         mapper_x = [temp_x * (dct_h // 7) for temp_x in mapper_x]
         mapper_y = [temp_y * (dct_w // 7) for temp_y in mapper_y]
+        # 将初始频域分量映射到实际像素平面上
 
-        self.dct_layer = MultiSpectralDCTLayer(dct_h, dct_w, mapper_x, mapper_y, channel)
+        self.dct_layer = MultiSpectralDCTLayer(dct_h, dct_w, mapper_x, mapper_y, channel)   # 生成DCT滤波器
         self.fc = nn.Sequential(
             nn.Linear(channel, channel // reduction, bias=False),
             nn.ReLU(inplace=True),
@@ -156,7 +157,7 @@ class MultiSpectralDCTLayer(nn.Module):
 
         self.num_freq = len(mapper_x)
 
-        # learnable DCT
+        # 可学习的DCT滤波器
         self.learnable_parameter('weight', self.get_dct_filter(height, width, mapper_x, mapper_y, channel))
 
     def forward(self, x):
@@ -204,4 +205,4 @@ class MultiSpectralDCTLayer(nn.Module):
                     dct_filter[i * c_part: (i + 1) * c_part, t_x, t_y] = self.build_filter(t_x, u_x, tile_size_x) * self.build_filter(t_y, v_y, tile_size_y)
                     # T_x为方程7中滤波器(J)的X坐标，U_X为所选频率分量(W，即频率)对应的X坐标，Tile_Size_x滤波器的X轴总长(方程7中)W  )
 
-        return nn.Parameter(dct_filter)
+        return nn.Parameter(dct_filter) # 可学习的参数
